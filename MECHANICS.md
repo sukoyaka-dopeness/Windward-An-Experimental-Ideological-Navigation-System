@@ -2,7 +2,7 @@
 # Windward — Internal Mechanics Specification
 # 内部メカニクス仕様
 
-Version: v0.2
+Version: v0.3
 Author: Copilot (Internal Mechanics)
 Integration: Claude
 
@@ -64,22 +64,15 @@ FrontierBonus = f(dist_from_known_clusters)
 
 ### 2.1 Summary Matching / 要約マッチング
 ```
-Player Summary  : S
+Player Summary          : S
 Island Canonical Vector : C
-AI Draft        : D（意図的に不完全・65-70点相当）
+Crew Draft (composite)  : D（船員ドラフトの複合・意図的に不完全）
 
-accuracy  = sim(S, C)   // プレイヤー要約の精度
-draft_gap = sim(D, C)   // AIドラフトの精度
+accuracy  = sim(S, C)
+draft_gap = max(sim(D_1,C), sim(D_2,C), sim(D_3,C))
 bonus     = max(0, accuracy - draft_gap)
-// プレイヤーがAIを超えた分だけボーナス発生
+// プレイヤーが全船員ドラフトを超えた分だけボーナス発生
 ```
-
-**AI副船長の不完全性設計 / AI Imperfection Design:**
-- 事実は正確だが文脈が浅い
-- 論理は通っているが感情的背景を欠く
-- 要点は押さえているが最重要の一文を外している
-- 時に誤読・誤解釈を含む（意図的）
-- 必ず確信度（Confidence Level）を表示する
 
 ### 2.2 Approval Logic / 承認ロジック
 ```
@@ -197,142 +190,186 @@ Crew不満蓄積
 
 ---
 
-## 6. AI Sub-Captains / AI副船長（複数構造）
+## 6. Crew Advisory System / 船員助言システム（旧：AI副船長）
 
 ### 6.0 設計思想 / Design Philosophy
 
-**単一の副船長は権威化される。**
+**副船長を「人格」にしない。副船長を「流動する観測代表」にする。**
+
+単一の、あるいは固定された副船長は権威化される。
 人は一貫した存在を参照軸として権威化する傾向がある。
-この問題を構造的に解決するため、副船長は複数視点構造を採用する。
-副船長たちは時に矛盾し、互いに異論を出す。
-「どれが正しいかわからない」状態を意図的に作ることで、
-プレイヤーが自分で判断せざるを得なくなる。
+この問題を構造的に解決するため、以下の設計を採用する。
 
-**A single sub-captain will be authority-ized.**
+- 船員AIは多数存在するが非公開（クラスタ群）
+- 各航海で3名のみがランダムに抽出される
+- 同一組み合わせは連続して選出されない
+- 抽出ロジックは非公開
+- 各船員は継続的な記憶を持たない
+- 出力は「副船長の言葉」ではなく「船員の噂話」として提示される
+
+**Do not give the first mate a personality. Make them a fluid observational representative.**
+
+A single or fixed sub-captain will be authority-ized.
 Humans tend to create a reference axis by authority-izing a consistent entity.
-To structurally resolve this, sub-captains adopt a multi-perspective structure.
-Sub-captains sometimes contradict each other and present differing views.
-By intentionally creating a state of "I don't know which is correct,"
-players are compelled to make their own judgments.
+To structurally resolve this, the following design is adopted.
 
 ---
 
-### 6.1 Three Sub-Captains / 三人の副船長
-
-| 副船長 | 通称 | 重視する視点 | 意図的な不完全さ |
-|---|---|---|---|
-| A | 羅針盤（Compass） | 論理・構造・距離計算 | 論理は正確だが感情的背景を欠く |
-| B | 航海日誌（Journal） | 感情・文脈・文化的背景 | 感情は豊かだが論理構造が甘い |
-| C | 海図（Chart） | 歴史的・比較的・俯瞰的視点 | 俯瞰的だが具体性に欠く |
-
-3者は同一の島民意見に対して**異なる解釈**を出す。
-時に互いに矛盾する。これは仕様であり、バグではない。
-
-The three produce **different interpretations** of the same islander opinion.
-They sometimes contradict each other. This is by design, not a bug.
-
----
-
-### 6.2 Draft Generation / ドラフト生成
+### 6.1 Crew Pool Structure / 船員プール構造
 ```
-各副船長が独立して65-70点相当の要約案を生成
+船員プール: 10-20名の仮想船員（性格・専門をランダム生成）
+各航海:     プールから3名をランダム抽出
+連続制限:   同一組み合わせは連続不可
+抽出ロジック: 非公開（メタ最適化を防止）
+記憶:       各船員は継続的記憶を持たない
+大潮流時:   プールを刷新（シャッフル）
+```
 
-副船長A（羅針盤）:
-  - 論理構造は正確
-  - 感情的背景・文化的文脈を欠く
-  - 距離計算ヒントを含む
+---
 
-副船長B（航海日誌）:
-  - 感情的共鳴は豊か
-  - 論理の厳密さが甘い
-  - 時に過度に共感的
+### 6.2 Observation Axes / 観測軸
 
-副船長C（海図）:
-  - 歴史的・比較的な俯瞰
-  - 具体性に欠ける
-  - 抽象度が高すぎることがある
+**人格は流動するが、観測軸は固定する。**
+権威を人格ではなく「測定軸」に帰属させる。
+
+**Personas are fluid, but observation axes are fixed.**
+Authority is attributed to "measurement axes," not to personas.
+
+| 軸 | 内容 | 意図的な不完全さ |
+|---|---|---|
+| 距離推定軸 | 論理・構造・距離計算重視 | 論理は正確だが感情的背景を欠く |
+| 翻訳忠実度軸 | 感情・文脈・文化的背景重視 | 感情は豊かだが論理構造が甘い |
+| 摩擦予測軸 | 歴史的・比較的・俯瞰的視点 | 俯瞰的だが具体性に欠ける |
+
+各航海で抽出された3名の船員が
+それぞれ異なる観測軸を担当する。
+担当軸は毎回異なる船員が担う。
+
+---
+
+### 6.3 Draft Generation / ドラフト生成
+```
+各船員が独立してドラフトを生成
 
 共通仕様:
+  - 65-70点相当（意図的に不完全）
   - 必ず確信度（Confidence Level）を表示する
   - 時に誤読・誤解釈を含む（意図的）
-  - UI上で「荒天の中で書かれた解釈」として提示
+
+パズル型設計（Gemini提案採用）:
+  - 各ドラフトには意図的な欠損を設ける
+    （伏せ字・矛盾・主語の欠落など）
+  - 3者のドラフトを「素材」として組み合わせることで
+    90点以上の理解に到達できる構造
+  - どれか1つを選ぶのではなく全員を素材として使うことを促す
 ```
 
-**UI文言例 / Example UI Text:**
-> 羅針盤：「方位は正しいが、島の温度が読めていない」
-> 航海日誌：「風の感触はわかるが、航路の論理が甘い」
-> 海図：「この島の位置は既知だが、今の潮流が考慮されていない」
+**UI提示形式 / UI Presentation:**
+「船員たちの噂話」として提示する。権威性を物語レベルで低下させる。
+
+> 例：「荒天の中で書かれた暫定解釈」
+> 例：「観測条件：視界不良」
+> 例：「解釈信頼度：揺らぎあり」
+
+AIを人格ではなく環境・天候に近づける。
 
 ---
 
-### 6.3 Player Surpass Bonus / プレイヤー超越ボーナス
-```
-PlayerSummary の精度が3者全員のドラフトを上回った場合
-  → 最大ボーナス発生（Full Surpass）
+### 6.4 Contradiction Handling / 矛盾の制御
 
-PlayerSummary の精度が1-2者を上回った場合
-  → 部分ボーナス発生（Partial Surpass）
+矛盾レベルを3段階で設計し、それぞれ異なるゲームイベントを発生させる。
 
-PlayerSummary がいずれのドラフトも下回った場合
-  → ボーナスなし（通常点のみ）
+| レベル | 状態 | ゲームイベント |
+|---|---|---|
+| 低 | 補完・互換 | 一致ボーナス |
+| 中 | 部分対立 | 船員議論アニメ（選択を促す） |
+| 高 | 全対立 | プレイヤー仲裁クエスト（報酬大） |
 
-bonus = max(0, sim(PlayerSummary, C) - max(sim(A,C), sim(B,C), sim(C,C)))
-```
+高レベル矛盾時：
+> 「船員たちの意見が真っ向から対立しています。あなたはどう読みますか？」
 
-AIドラフトをそのままコピーすると：
-- ボーナス発生なし（通常点のみ）
-- 「模倣」として船員が不満を漏らす（心理的抑止）
-- 3者の中から1つを選んでコピーしても同様
+矛盾が多いほどその島の意見の複雑さを示す。
+高レベル矛盾でのPlayerSurpassボーナスは最大倍率。
 
 ---
 
-### 6.4 Contradiction Handling / 矛盾の扱い
+### 6.5 Inter-Crew Critique / 船員間の相互批評
 ```
-3者が矛盾した解釈を出した場合:
-  → プレイヤーへの通知:
-     「副船長たちの意見が分かれています。あなたはどう読みますか？」
-
-矛盾の種類:
-  A vs B: 論理と感情の対立
-  A vs C: 具体と抽象の対立
-  B vs C: 感情と俯瞰の対立
-  A vs B vs C: 三者三様
-
-矛盾が多いほど → その島の意見の複雑さを示す
-矛盾した状況でのPlayerSurpassボーナス → 最大倍率
+船員AがBの解釈に異議を唱えることがある
+不一致はUI上に可視化される
+AIが合意するのではなく「差異」を提示する
+→ AIに正解が存在しないことを構造的に示す
 ```
 
 ---
 
-### 6.5 Difficulty Toggle / 難易度トグル
+### 6.6 Player Surpass Bonus / プレイヤー超越ボーナス
 ```
-ベテラン: 副船長オフ（高報酬倍率・完全自力）
-中級者:   副船長1名選択（中報酬倍率）
-初心者:   副船長3名全表示（低報酬倍率・練習港では制限なし）
+bonus = max(0, sim(S, C) - max(sim(D_1,C), sim(D_2,C), sim(D_3,C)))
+
+Full Surpass   : 全ドラフトを超えた → 最大ボーナス
+Partial Surpass: 1-2者を超えた     → 部分ボーナス
+No Surpass     : いずれも超えず    → 通常スコアのみ
+Copy Detected  : コピー検出        → ボーナス無効のみ
+                                    （心理的罰は与えない）
 ```
 
-プレイヤーはどの副船長を参考にするか、あるいは全員無視するかを選べる。
-参考にしないことも有効な戦略である。
-
-Players can choose which sub-captain to reference, or ignore all of them.
-Ignoring all is also a valid strategy.
+**コピー抑止設計について / Copy Deterrence Design:**
+コピー検出時はボーナス無効のみとする。
+「船員不満」などの心理的罰は最小化する。
+翻訳成功との誤判定リスクを避けるため。
+P1（Friction > Punishment）に従う。
 
 ---
 
-### 6.6 U1 Resolution Status / U1解決状況
+### 6.7 Player Trust Rating / プレイヤーによる船員評価
+```
+プレイヤーは各船員ドラフトを評価できる
+評価はゲーム内で変動する
+→ 権威化の方向を逆転させる
+   （AI→人間ではなく、人間→AIの評価構造）
+```
+
+---
+
+### 6.8 Difficulty & Accessibility / 難易度とアクセシビリティ
+```
+初心者:   序盤は1名固定 → 中盤で3名解禁（練習港では制限なし）
+中級者:   3名表示（デフォルト）
+ベテラン: 船員オフ（高報酬倍率・完全自力）
+
+UI:
+  デフォルト: 音声・アイコン中心（認知負荷を最小化）
+  覗き窓:    詳細比較表（任意表示）
+```
+
+---
+
+### 6.9 U1 Resolution Status / U1解決状況
 ```
 U1: AI副船長の正解権威化
-  従来の暫定解: わざとな不完全設計 + 免責UI表示
-  追加の構造解: 複数副船長 + 矛盾設計
 
-評価:
-  単一副船長の権威化リスク → 大幅に低減
-  「どれが正しいかわからない」状態 → 構造的に達成
-  プレイヤーの主体性 → 強制的に担保
+以前の状態: 根本解なし
+現在の状態: 構造的耐性が大幅に向上（実質的部分解決）
+
+採用した構造:
+  - 流動代表制（プールからランダム抽出）
+  - 観測軸固定・人格流動
+  - パズル型ドラフト（組み合わせで90点到達）
+  - 相互批評・差異の可視化
+  - 逆転評価構造（人間→AI）
+  - 定期的なプールシャッフル
 
 残存リスク:
-  「3者の中で最もマシな副船長」への収束は起こりうる
-  → 副船長の性格を定期的にシャッフルすることで対応（検討中）
+  - 抽出パターン解析による準最適化
+  - 「最もマシな観測軸」への偏重
+  - 矛盾過多による苛立ち
+  - 完全解には至っていない（継続監視）
+
+KPI測定:
+  - コピー率の推移
+  - 独自出力率の推移
+  - アンケート「AI正解感」の低下率
 ```
 
 ---
@@ -353,11 +390,11 @@ AI がクラスタ距離を計算し Novelty 候補として登録
 **新島確定の条件 / New Island Confirmation:**
 - 報酬は即時ではなく検証後に付与（奇抜狙い防止）
 - 複数の独立したプレイヤーの承認が必要
-- 暫定バッジを即時付与→確定バッジは検証後
+- 暫定バッジを即時付与 → 確定バッジは検証後
 
 **灯台の固定化リスク / Lighthouse Fixation Risk:**
 大潮流後も灯台は保全されるが、
-長期間変化しない灯台は「霧化」するリスクがある（検討中）。
+長期間変化しない灯台は「霧化」するリスクがある（検討中・U6参照）。
 
 ### 7.2 Lighthouse Proxy AI / 灯台代理AI
 ```
@@ -403,7 +440,7 @@ FrontierBonus = 未踏領域倍率
 ## 10. Async Engine / 非同期エンジン
 ```
 ターン終了 → 自動帰港（Home Island）
-返答待ち中 → Home Island で資源管理・ソロ探索・日誌整理
+返答待ち中 → Home Island で資源管理・ソロ探索・日誌整理・灯台更新
 72時間経過 → Lighthouse Proxy AI が暫定応答
 島主復帰時 → 人間による再評価オプション提示
 Push通知   → 返答到着時にオプトイン通知
@@ -418,6 +455,7 @@ CoopSoloAlternation: 協力フェーズとソロフェーズを交互に推奨
 AllianceExpiry:      同盟は大潮流でリセット
 LargeAllianceRule:   N人以上の同盟は外部交易を義務化
 MatchingBias:        船団マッチングは思想的距離が遠い相手を優先
+CrewPoolShuffle:     大潮流時に船員プールを刷新
 ```
 
 ---
