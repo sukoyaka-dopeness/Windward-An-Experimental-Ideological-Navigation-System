@@ -45,8 +45,8 @@ When you can summarize the words of an islander with opposing views in a way the
 
 2. **航海日誌の記述 / Write the Journal**
    訪れた島の主張を読み、相手が納得する形で要約し、航海日誌に記述する。
-   AI副船長は70点程度のドラフトを提示するが、意図的に不完全。
-   プレイヤーがそれを補完・修正することで「理解」が深まる。
+   船員助言システムは65-70点程度の不完全なドラフトを提示する。
+   プレイヤーがそれを素材として補完・修正することで「理解」が深まる。
 
 3. **双方向の検証 / Dual Verification（非同期）**
    記述した日誌は島の住人へ送られる。
@@ -77,7 +77,7 @@ When you can summarize the words of an islander with opposing views in a way the
 
 - **摩擦の肯定**: 対立を「悪」とせず、航海に必要なエネルギーとして扱う。
 - **非処罰的設計**: 攻撃的な言動は「嵐」や「向かい風」として環境的にフィードバックする。
-- **プライバシー保護**: 思想的傾向は暗号化ベクトルデータとして処理される。詳細は [PRIVACY_AND_ETHICS_POLICY.md](docs/PRIVACY_AND_ETHICS_POLICY.md) を参照。
+- **プライバシー保護**: 思想的傾向は暗号化ベクトルデータとして処理される。詳細は [PRIVACY\_AND\_ETHICS\_POLICY.md](docs/PRIVACY_AND_ETHICS_POLICY.md) を参照。
 
 ---
 
@@ -87,7 +87,10 @@ When you can summarize the words of an islander with opposing views in a way the
 
 - **AIの役割**: 距離計算・要約補助・異常検出。思想の善悪を裁定しない。
 - **人間の役割**: 言葉の真意を読み解き、誠実な要約を行い、意味を創造する。
-- **AI副船長**: 70点の不完全なドラフトを提示する「踏み台」。正解を提供しない。
+- **船員助言システム**: 65-70点の不完全なドラフトを提示する「踏み台」。
+  10-20名の船員プールから毎回3名がランダムに選ばれ、
+  それぞれ異なる視点から互いに矛盾することもある解釈を提示する。
+  正解を提供しない。正解を生成しない。
 
 ---
 
